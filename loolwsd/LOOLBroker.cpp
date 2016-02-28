@@ -35,7 +35,7 @@ const std::string BROKER_SUFIX = ".fifo";
 const std::string BROKER_PREFIX = "lokit";
 
 static int readerChild = -1;
-static int readerBroker = -1;
+static int readerMaster = -1;
 static int writerNotify = -1;
 
 static std::string loolkitPath;
@@ -349,7 +349,7 @@ public:
     {
         struct pollfd pollPipeBroker;
 
-        pollPipeBroker.fd = readerBroker;
+        pollPipeBroker.fd = readerMaster;
         pollPipeBroker.events = POLLIN;
         pollPipeBroker.revents = 0;
 
@@ -360,7 +360,7 @@ public:
 
         Log::debug("Thread [" + thread_name + "] started.");
 
-        Util::pollPipeForReading(pollPipeBroker, FIFO_LOOLWSD, readerBroker,
+        Util::pollPipeForReading(pollPipeBroker, FIFO_LOOLWSD, readerMaster,
                                  [this](std::string& message) {return handleInput(message); } );
 
         Log::debug("Thread [" + thread_name + "] finished.");
@@ -663,7 +663,7 @@ int main(int argc, char** argv)
 
     const Path pipePath = Path::forDirectory(childRoot + Path::separator() + FIFO_PATH);
     const std::string pipeLoolwsd = Path(pipePath, FIFO_LOOLWSD).toString();
-    if ( (readerBroker = open(pipeLoolwsd.c_str(), O_RDONLY) ) < 0 )
+    if ( (readerMaster = open(pipeLoolwsd.c_str(), O_RDONLY) ) < 0 )
     {
         Log::error("Error: failed to open pipe [" + pipeLoolwsd + "] read only. Exiting.");
         exit(Application::EXIT_SOFTWARE);
@@ -892,7 +892,7 @@ int main(int argc, char** argv)
     pipeThread.join();
     close(writerNotify);
     close(readerChild);
-    close(readerBroker);
+    close(readerMaster);
 
     Log::info("Process [loolbroker] finished.");
     return Application::EXIT_OK;
