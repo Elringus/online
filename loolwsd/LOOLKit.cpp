@@ -69,6 +69,9 @@ using Poco::ThreadLocal;
 const std::string CHILD_URI = "/loolws/child/";
 const std::string FIFO_PATH = "pipe";
 const std::string FIFO_BROKER = "loolbroker.fifo";
+const std::string FIFO_NOTIFY = "loolnotify.fifo";
+
+static int writerNotify = -1;
 
 namespace
 {
@@ -694,6 +697,10 @@ private:
         }
 
         ++_clientViews;
+        // Notify
+        std::string message = "views " + std::to_string(Process::id()) + " " + std::to_string(_clientViews) + " \r\n";
+        Util::writeFIFO(writerNotify, message);
+
         return _loKitDocument;
     }
 
@@ -710,6 +717,9 @@ private:
         }
 
         --_clientViews;
+        // Notify
+        std::string message = "views " + std::to_string(Process::id()) + " " + std::to_string(_clientViews) + " \r\n";
+        Util::writeFIFO(writerNotify, message);
         Log::info("Session " + sessionId + " is unloading. " + std::to_string(_clientViews) + " views will remain.");
 
         if (_multiView && _loKitDocument)
@@ -807,6 +817,14 @@ void lokit_main(const std::string& childRoot,
         if ((writerBroker = open(pipeBroker.c_str(), O_WRONLY) ) < 0)
         {
             Log::error("Error: failed to open pipe [" + FIFO_BROKER + "] write only.");
+            exit(Application::EXIT_SOFTWARE);
+        }
+
+        // Open notify pipe
+        const std::string pipeNotify = Path(pipePath, FIFO_NOTIFY).toString();
+        if ((writerNotify = open(pipeNotify.c_str(), O_WRONLY) ) < 0)
+        {
+            Log::error("Error: pipe opened for writing.");
             exit(Application::EXIT_SOFTWARE);
         }
 

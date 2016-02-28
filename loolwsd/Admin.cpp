@@ -241,10 +241,11 @@ void Admin::handleInput(std::string& message)
         std::string url = tokens[2];
 
         _model.addDocument(std::stoi(pid), url);
+        _model.notify(message);
     }
     else if (tokens.count() == 3 && tokens[0] == "views")
     {
-        // TODO: Update the model first and then notify elegantly
+        _model.updateDocViews(std::stoi(tokens[1]), std::stoi(tokens[2]));
         _model.notify(message);
     }
 }

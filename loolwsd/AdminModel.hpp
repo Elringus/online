@@ -43,7 +43,14 @@ public:
         std::string response;
         for (const auto& it: _documents)
         {
-            response += std::to_string(it.first)  + " " + it.second + " <BR/>";
+            response += std::to_string(it.first)  + " " + it.second;
+            if (_documentViews.find(it.first) != _documentViews.end()) {
+                response += " " + std::to_string(_documentViews[it.first]);
+            }
+            else
+                response += " 0 ";
+
+            response += "<BR/>";
         }
 
         return response;
@@ -70,9 +77,14 @@ public:
         }
     }
 
+    void updateDocViews(Poco::Process::PID pid, unsigned nViews) {
+        _documentViews[pid] = nViews;
+    }
+
 private:
     std::vector<std::weak_ptr<Poco::Net::WebSocket> > _adminConsoles;
     std::map<Poco::Process::PID, std::string> _documents;
+    std::map<Poco::Process::PID, unsigned> _documentViews;
 };
 
 #endif
