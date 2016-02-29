@@ -27,82 +27,175 @@
   </head>
 
   <body>
+    <script src="../../dist/leaflet-src.js"></script>
+    <script>
+	function getParameterByName(name) {
+		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+		results = regex.exec(location.search);
+		return results === null ? "" : results[1].replace(/\+/g, " ");
+	}
 
+	var host = getParameterByName('host');
+	var socket = new WebSocket(host);
+
+	socket.onerror = onSocketError;
+	socket.onclose = onSocketClose;
+	socket.onopen = onOpen;
+	socket.onmessage = onMessage;
+	socket.binaryType = 'arraybuffer';
+
+	function onSocketError() {
+		vex.dialog.alert('Socket Error');
+	}
+
+	function onSocketClose() {
+		socket.onerror = function() {};
+		socket.onclose = function() {};
+		socket.onmessage = function() {};
+		socket.close();
+	}
+
+	function onOpen() {
+		socket.send('documents');
+	}
+
+	function onMessage(e) {
+		var textMsg;
+		if (typeof e.data === 'string') {
+			textMsg = e.data;
+		}
+		else
+			textMsg = '';
+
+		var tableContainer = L.DomUtil.get('doclist');
+
+		if (textMsg.startsWith('documents')) {
+			var documents = textMsg.substring('documents'.length);
+			documents = documents.trim().split('<BR/>');
+			for (var i = 0; i < documents.length; i++) {
+				if (documents[i] == '')
+					continue;
+				var docProps = documents[i].trim().split(' ');
+				var sPid = docProps[0];
+				var sUrl = docProps[1];
+				var sViews = docProps[2];
+				if (sUrl === '0') {
+					continue;
+				}
+				var rowContainer = L.DomUtil.create('tr', '', tableContainer);
+				rowContainer.id = 'doc' + sPid;
+				var pidEle = L.DomUtil.create('td', '', rowContainer);
+				pidEle.innerHTML = sPid;
+				var urlEle = L.DomUtil.create('td', '', rowContainer);
+				urlEle.innerHTML = sUrl;
+				var viewsEle = L.DomUtil.create('td', '', rowContainer);
+				viewsEle.innerHTML = sViews;
+				viewsEle.id = 'docview' + sPid;
+				var memEle = L.DomUtil.create('td', '', rowContainer);
+				memEle.innerHTML = 25;
+			}
+		}
+		else if (textMsg.startsWith('views')) {
+			var nViews = textMsg.substring('views'.length).trim().split(' ');
+			L.DomUtil.get('docview' + nViews[0]).innerHTML = nViews[1];
+		}
+		else if (textMsg.startsWith('document')) {
+			textMsg = textMsg.substring('document'.length);
+			var docProps = textMsg.trim().split(' ');
+			var sPid = docProps[0];
+			var sUrl = docProps[1];
+			var docEle = document.getElementById('doc' + sPid);
+			if (docEle) {
+				return;
+			}
+			if (sUrl === '0') {
+				tableContainer.removeChild(docEle);
+				return;
+			}
+			var rowContainer = L.DomUtil.create('tr', '', tableContainer);
+			rowContainer.id = 'doc' + docProps[0];
+			var pidEle = L.DomUtil.create('td', '', rowContainer);
+			pidEle.innerHTML = docProps[0];
+			var urlEle = L.DomUtil.create('td', '', rowContainer);
+			urlEle.innerHTML = docProps[1];
+			var viewsEle = L.DomUtil.create('td', '', rowContainer);
+			viewsEle.innerHTML = 0;
+			viewsEle.id = 'docview' + docProps[0];
+			var memEle = L.DomUtil.create('td', '', rowContainer);
+			memEle.innerHTML = 25;
+		}
+	}
+	</script>
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">LibreOffice Online - Admin console</a>
-        </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="#">Dashboard</a></li>
-            <li><a href="#">Settings</a></li>
-            <li><a href="#">Profile</a></li>
-            <li><a href="#">Help</a></li>
-          </ul>
-          <form class="navbar-form navbar-right">
-            <input type="text" class="form-control" placeholder="Search...">
-          </form>
-        </div>
+	<div class="navbar-header">
+	  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+	    <span class="sr-only">Toggle navigation</span>
+	    <span class="icon-bar"></span>
+	    <span class="icon-bar"></span>
+	    <span class="icon-bar"></span>
+	  </button>
+	  <a class="navbar-brand" href="#">LibreOffice Online - Admin console</a>
+	</div>
+	<div id="navbar" class="navbar-collapse collapse">
+	  <ul class="nav navbar-nav navbar-right">
+	    <li><a href="#">Dashboard</a></li>
+	    <li><a href="#">Settings</a></li>
+	    <li><a href="#">Profile</a></li>
+	    <li><a href="#">Help</a></li>
+	  </ul>
+	  <form class="navbar-form navbar-right">
+	    <input type="text" class="form-control" placeholder="Search...">
+	  </form>
+	</div>
       </div>
     </nav>
 
     <div class="container-fluid">
       <div class="row">
-        <div class="col-sm-3 col-md-2 sidebar">
-          <ul class="nav nav-sidebar">
-            <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
-            <li><a href="#">Reports</a></li>
-            <li><a href="#">Analytics</a></li>
-            <li><a href="#">Export</a></li>
-          </ul>
-        </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">Dashboard</h1>
+	<div class="col-sm-3 col-md-2 sidebar">
+	  <ul class="nav nav-sidebar">
+	    <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+	    <li><a href="#">Reports</a></li>
+	    <li><a href="#">Analytics</a></li>
+	    <li><a href="#">Export</a></li>
+	  </ul>
+	</div>
+	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+	  <h1 class="page-header">Dashboard</h1>
 
-          <div class="row placeholders">
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Users online</h4>
-            </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Documents opened</h4>
-            </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Memory consumed</h4>
-            </div>
-          </div>
+	  <div class="row placeholders">
+	    <div class="col-xs-6 col-sm-3 placeholder">
+	      <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+	      <h4>Users online</h4>
+	    </div>
+	    <div class="col-xs-6 col-sm-3 placeholder">
+	      <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+	      <h4>Documents opened</h4>
+	    </div>
+	    <div class="col-xs-6 col-sm-3 placeholder">
+	      <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+	      <h4>Memory consumed</h4>
+	    </div>
+	  </div>
 
-          <h2 class="sub-header">Documents opened</h2>
-          <div class="table-responsive">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>PID</th>
-                  <th>Document</th>
-                  <th>Number of views</th>
-                  <th>Memory consumed</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>3456</td>
-                  <td>orig.odt</td>
-                  <td>2</td>
-                  <td>25</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+	  <h2 class="sub-header">Documents opened</h2>
+	  <div class="table-responsive">
+	    <table class="table table-striped">
+	      <thead>
+		<tr>
+		  <th>PID</th>
+		  <th>Document</th>
+		  <th>Number of views</th>
+		  <th>Memory consumed</th>
+		</tr>
+	      </thead>
+	      <tbody id="doclist">
+	      </tbody>
+	    </table>
+	  </div>
+	</div>
       </div>
     </div>
 
