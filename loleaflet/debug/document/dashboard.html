@@ -80,6 +80,7 @@
 				var sPid = docProps[0];
 				var sUrl = docProps[1];
 				var sViews = docProps[2];
+				var sMem = docProps[3];
 				if (sUrl === '0') {
 					continue;
 				}
@@ -93,7 +94,7 @@
 				viewsEle.innerHTML = sViews;
 				viewsEle.id = 'docview' + sPid;
 				var memEle = L.DomUtil.create('td', '', rowContainer);
-				memEle.innerHTML = 25;
+				memEle.innerHTML = sMem;
 			}
 		}
 		else if (textMsg.startsWith('views')) {
@@ -105,8 +106,12 @@
 			var docProps = textMsg.trim().split(' ');
 			var sPid = docProps[0];
 			var sUrl = docProps[1];
+			var sMem = docProps[2];
 			var docEle = document.getElementById('doc' + sPid);
 			if (docEle) {
+				tableContainer.removeChild(docEle);
+			}
+			if (sUrl === '0') {
 				return;
 			}
 			var rowContainer = L.DomUtil.create('tr', '', tableContainer);
@@ -119,7 +124,7 @@
 			viewsEle.innerHTML = 0;
 			viewsEle.id = 'docview' + docProps[0];
 			var memEle = L.DomUtil.create('td', '', rowContainer);
-			memEle.innerHTML = 25;
+			memEle.innerHTML = sMem;
 		}
 		else if (textMsg.startsWith('docdestroy')) {
 			textMsg = textMsg.substring('docdestroy'.length);
