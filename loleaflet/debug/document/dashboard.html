@@ -109,10 +109,6 @@
 			if (docEle) {
 				return;
 			}
-			if (sUrl === '0') {
-				tableContainer.removeChild(docEle);
-				return;
-			}
 			var rowContainer = L.DomUtil.create('tr', '', tableContainer);
 			rowContainer.id = 'doc' + docProps[0];
 			var pidEle = L.DomUtil.create('td', '', rowContainer);
@@ -124,6 +120,15 @@
 			viewsEle.id = 'docview' + docProps[0];
 			var memEle = L.DomUtil.create('td', '', rowContainer);
 			memEle.innerHTML = 25;
+		}
+		else if (textMsg.startsWith('docdestroy')) {
+			textMsg = textMsg.substring('docdestroy'.length);
+			var docProps = textMsg.trim().split(' ');
+			var sPid = docProps[0];
+			var docEle = document.getElementById('doc' + sPid);
+			if (docEle) {
+				tableContainer.removeChild(docEle);
+			}
 		}
 	}
 	</script>
