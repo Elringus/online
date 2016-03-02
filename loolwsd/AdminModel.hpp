@@ -44,16 +44,43 @@ public:
         for (const auto& it: _documents)
         {
             response += std::to_string(it.first)  + " " + it.second;
-            if (_documentViews.find(it.first) != _documentViews.end()) {
+            if (_documentViews.find(it.first) != _documentViews.end())
+            {
                 response += " " + std::to_string(_documentViews[it.first]);
             }
             else
-                response += " 0 ";
+                response += " 0";
 
-            response += "<BR/>";
+            unsigned mem = getDocMemory(it.first);
+            if (mem != 0)
+            {
+                response += " " + std::to_string(mem);
+            }
+
+            response += " <BR/>";
         }
 
         return response;
+    }
+
+    unsigned getDocMemory(Poco::Process::PID nPid)
+    {
+        std::string memResponse;
+        const auto cmd = "ps o rss= -p " + std::to_string(nPid);
+        FILE* fp = popen(cmd.c_str(), "r");
+        if (fp == nullptr)
+        {
+            return 0;
+        }
+
+        char cmdBuffer[1024];
+        while (fgets(cmdBuffer, sizeof(cmdBuffer) - 1, fp) != nullptr)
+        {
+            memResponse += cmdBuffer;
+        }
+        pclose(fp);
+
+        return std::stoi(memResponse);
     }
 
     void subscribe(std::shared_ptr<Poco::Net::WebSocket>& ws)
@@ -61,7 +88,7 @@ public:
         _adminConsoles.push_back(ws);
     }
 
-    void notify(std::string& message)
+    void notify(std::string message)
     {
         for ( unsigned i = 0; i < _adminConsoles.size(); i++ )
         {
@@ -79,8 +106,8 @@ public:
 
     void removeDocument(Poco::Process::PID pid)
     {
-        documents.erase(pid);
-        documentViews.erase(pid);
+        _documents.erase(pid);
+        _documentViews.erase(pid);
     }
 
     void updateDocViews(Poco::Process::PID pid, unsigned nViews) {

@@ -241,7 +241,8 @@ void Admin::handleInput(std::string& message)
         std::string url = tokens[2];
 
         _model.addDocument(std::stoi(pid), url);
-        _model.notify(message);
+        unsigned mem = _model.getDocMemory(std::stoi(pid));
+        _model.notify(message + std::to_string(mem));
     }
     else if (tokens.count() == 3 && tokens[0] == "views")
     {
@@ -250,8 +251,8 @@ void Admin::handleInput(std::string& message)
     }
     else if (tokens.count() == 2 && tokens[0] == "docdestroy")
     {
-        model.removeDocument(std::stoi(tokens[1]));
-        model.notify(message);
+        _model.removeDocument(std::stoi(tokens[1]));
+        _model.notify(message);
     }
 }
 
