@@ -1056,6 +1056,10 @@ void lokit_main(const std::string& childRoot,
     if (loKit)
         loKit->pClass->destroy(loKit);
 
+    // Notify
+    Util::writeFIFO(writerNotify, "docdestroy " + std::to_string(Process::id()) + " \r\n");
+    close(writerNotify);
+
     Log::info("Process [" + process_name + "] finished.");
 }
 

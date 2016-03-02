@@ -248,6 +248,11 @@ void Admin::handleInput(std::string& message)
         _model.updateDocViews(std::stoi(tokens[1]), std::stoi(tokens[2]));
         _model.notify(message);
     }
+    else if (tokens.count() == 2 && tokens[0] == "docdestroy")
+    {
+        model.removeDocument(std::stoi(tokens[1]));
+        model.notify(message);
+    }
 }
 
 void Admin::run()

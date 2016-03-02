@@ -77,6 +77,12 @@ public:
         }
     }
 
+    void removeDocument(Poco::Process::PID pid)
+    {
+        documents.erase(pid);
+        documentViews.erase(pid);
+    }
+
     void updateDocViews(Poco::Process::PID pid, unsigned nViews) {
         _documentViews[pid] = nViews;
     }

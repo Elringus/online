@@ -96,6 +96,9 @@ namespace
             {
                 if (kill(_pid, SIGINT) != 0 && kill(_pid, 0) != 0)
                     Log::warn("Cannot terminate lokit [" + std::to_string(_pid) + "]. Abandoning.");
+
+                // Notify
+                Util::writeFIFO(writerNotify, "docdestroy " + std::to_string(_pid) + " \r\n");
                _pid = -1;
             }
 
